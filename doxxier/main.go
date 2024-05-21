@@ -1,15 +1,5 @@
 package main
 
-import (
-	"bytes"
-
-	"github.com/ulikunitz/xz"
-)
-
-func Compress(data []byte) []byte {
-	var buffer bytes.Buffer
-	w, _ := xz.NewWriter(&buffer)
-	w.Write(data)
-	w.Close()
-	return buffer.Bytes()
+func main() {
+	// This is a placeholder for the main function
 }

@@ -1,8 +1,17 @@
 package main
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
+
+	"doxxier.tech/doxxier/compression"
 )
+
+type CompressionResponse struct {
+	Length int
+	Data   []byte
+}
 
 func main() {
 	fileServer := http.FileServer(http.Dir("static"))
@@ -13,9 +22,24 @@ func main() {
 }
 
 func compress(w http.ResponseWriter, r *http.Request) {
-	compressed := doxxier.compress(r.Body)
-	if len(compressed) == 0 {
-		t.Error("Compressed data is empty")
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.Write([]byte("Error reading body"))
 	}
-	w.Write(compressed.len)
+	defer r.Body.Close()
+	compressed := compression.Compress(body)
+	response := CompressionResponse{
+		Length: len(compressed),
+		Data:   compressed,
+	}
+
+	jsonData, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonData)
 }

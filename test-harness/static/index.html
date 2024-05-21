@@ -1,30 +1,26 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>My Website</title>
     <script>
-        function uploadFile() {
+        async function uploadFile() {
             var file = document.getElementById('file').files[0];
             var formData = new FormData();
             formData.append('file', file);
 
-            var xhr = new XMLHttpRequest();
-            xhr.open('POST', '/compress', true);
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    console.log('File uploaded successfully');
-                } else {
-                    console.log('File upload failed');
-                }
+            var response = await fetch('/compress', {
+                method: 'POST',
+                body: formData
+            })
+            if (response.status = 200) {
+                const data = await response.json();
+                document.getElementById('status').innerText = data.length;
             };
-            xhr.send(formData).then(function(response) {
-                document.getElementById('status').innerText = response.body.length;
-            }
         }
     </script>
 </head>
 <body>
-    <form>
+    <form id="main">
         <span>Select a file</span>
         <input type="file" id="file" name="file">
         <button type="button" onclick="uploadFile()">Compress</button>
