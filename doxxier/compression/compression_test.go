@@ -6,7 +6,7 @@ import (
 
 func TestCompress(t *testing.T) {
 	data := []byte("Hello, World!")
-	compressed := Compress(data)
+	compressed := Compress(data, AlgXz)
 	if len(compressed) == 0 {
 		t.Error("Compressed data is empty")
 	}

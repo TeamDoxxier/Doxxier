@@ -1,15 +1,26 @@
 package compression
 
-import (
-	"bytes"
+import compression "doxxier.tech/doxxier/compression/compressors"
 
-	"github.com/ulikunitz/xz"
-)
+func Compress(data []byte, alg CompressionAlgorithm) []byte {
 
-func Compress(data []byte) []byte {
-	var buffer bytes.Buffer
-	w, _ := xz.NewWriter(&buffer)
-	w.Write(data)
-	w.Close()
-	return buffer.Bytes()
+	var compressor Compressor
+	switch alg {
+	case AlgXz:
+		compressor = &compression.XzCompressor{}
+	default:
+		return data
+	}
+	return compressor.Compress(data)
+}
+
+func Uncompress(data []byte, alg CompressionAlgorithm) []byte {
+	var compressor Compressor
+	switch alg {
+	case AlgXz:
+		compressor = &compression.XzCompressor{}
+	default:
+		return data
+	}
+	return compressor.Uncompress(data)
 }
