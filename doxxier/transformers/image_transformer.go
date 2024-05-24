@@ -11,6 +11,7 @@ import (
 	"doxxier.tech/doxxier/models"
 	"github.com/adrium/goheif"
 	"github.com/gen2brain/avif"
+	"github.com/nfnt/resize"
 )
 
 type ImageTransformer struct{}
@@ -24,7 +25,12 @@ func (t *ImageTransformer) Transform(ctx *models.DoxxierContext) error {
 	if err != nil {
 		return err
 	}
-	avif.Encode(writer, img, avif.Options{Quality: 40, Speed: 10})
+	if img.Bounds().Dx() > img.Bounds().Dy() {
+		img = resize.Resize(1920, 0, img, resize.Lanczos3)
+	} else {
+		img = resize.Resize(1080, 0, img, resize.Lanczos3)
+	}
+	avif.Encode(writer, img, avif.Options{Quality: 60, Speed: 8})
 	ctx.Content = writer.Bytes()
 	return nil
 }
