@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"doxxier.tech/doxxier/compression"
+	"doxxier.tech/doxxier/imaging"
 )
 
 type CompressionResponse struct {
@@ -18,7 +19,19 @@ func main() {
 
 	http.Handle("/", fileServer)
 	http.Handle("/compress", http.HandlerFunc(compress))
+	http.Handle("/convert", http.HandlerFunc(convertImage))
 	http.ListenAndServe(":8080", nil)
+}
+
+func convertImage(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.Write([]byte("Error reading body"))
+	}
+	defer r.Body.Close()
+	image := imaging.Convert(body)
+	w.Header().Set("content-type", "image/avif")
+	w.Write(image)
 }
 
 func compress(w http.ResponseWriter, r *http.Request) {
