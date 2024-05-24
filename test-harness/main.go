@@ -6,7 +6,8 @@ import (
 	"net/http"
 
 	"doxxier.tech/doxxier/compression"
-	"doxxier.tech/doxxier/imaging"
+	"doxxier.tech/doxxier/models"
+	"doxxier.tech/doxxier/transformers"
 )
 
 type CompressionResponse struct {
@@ -24,14 +25,30 @@ func main() {
 }
 
 func convertImage(w http.ResponseWriter, r *http.Request) {
-	body, err := io.ReadAll(r.Body)
+	file, _, err := r.FormFile("image")
 	if err != nil {
-		w.Write([]byte("Error reading body"))
+		w.Write([]byte("Error parsing form"))
+		return
 	}
-	defer r.Body.Close()
-	image := imaging.Convert(body)
+	defer file.Close()
+
+	content, err := io.ReadAll(file)
+	if err != nil {
+		w.Write([]byte("Error reading file"))
+		return
+	}
+
+	ctx := &models.DoxxierContext{ // Pass a pointer to ctx
+		Content: content,
+	}
+	err = (&transformers.ImageTransformer{}).Transform(ctx) // Pass ctx as a pointer
+	if err != nil {
+		w.Write([]byte("Error transforming image"))
+		return
+	}
 	w.Header().Set("content-type", "image/avif")
-	w.Write(image)
+	w.WriteHeader(http.StatusOK)
+	w.Write(ctx.Content)
 }
 
 func compress(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +57,7 @@ func compress(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Error reading body"))
 	}
 	defer r.Body.Close()
-	compressed := compression.Compress(body)
+	compressed := compression.Compress(body, compression.AlgXz)
 	response := CompressionResponse{
 		Length: len(compressed),
 		Data:   compressed,

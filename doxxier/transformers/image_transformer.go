@@ -24,7 +24,8 @@ func (t *ImageTransformer) Transform(ctx *models.DoxxierContext) error {
 	if err != nil {
 		return err
 	}
-	avif.Encode(writer, img, avif.Options{Quality: 100})
+	avif.Encode(writer, img, avif.Options{Quality: 40, Speed: 10})
+	ctx.Content = writer.Bytes()
 	return nil
 }
 
