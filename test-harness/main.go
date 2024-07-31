@@ -57,7 +57,7 @@ func compress(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Error reading body"))
 	}
 	defer r.Body.Close()
-	compressed := compression.Compress(body, compression.AlgXz)
+	compressed := compression.Compress(compression.AlgXz, body)
 	response := CompressionResponse{
 		Length: len(compressed),
 		Data:   compressed,

@@ -2,7 +2,7 @@ package compression
 
 import compression "doxxier.tech/doxxier/compression/compressors"
 
-func Compress(data []byte, alg CompressionAlgorithm) []byte {
+func Compress(alg CompressionAlgorithm, data []byte) []byte {
 
 	var compressor Compressor
 	switch alg {
@@ -14,7 +14,7 @@ func Compress(data []byte, alg CompressionAlgorithm) []byte {
 	return compressor.Compress(data)
 }
 
-func Uncompress(data []byte, alg CompressionAlgorithm) []byte {
+func Uncompress(alg CompressionAlgorithm, data []byte) []byte {
 	var compressor Compressor
 	switch alg {
 	case AlgXz:

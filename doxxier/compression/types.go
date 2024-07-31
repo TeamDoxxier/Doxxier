@@ -1,9 +1,18 @@
 package compression
 
-type CompressionAlgorithm string
+type CompressionAlgorithm int
 
 const (
-	AlgXz     CompressionAlgorithm = "xz"
-	AlgGzip   CompressionAlgorithm = "gzip"
-	AlgBrotli CompressionAlgorithm = "brotli"
+	AlgXz CompressionAlgorithm = iota
+	AlgGzip
+	AlgBrotli
 )
+
+func StringToCompressionAlgorithm(s string) CompressionAlgorithm {
+	mapping := map[string]CompressionAlgorithm{
+		"AlgXz":     AlgXz,
+		"AlgGzip":   AlgGzip,
+		"AlgBrotli": AlgBrotli,
+	}
+	return mapping[s]
+}

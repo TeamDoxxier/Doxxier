@@ -25,7 +25,7 @@ func (t *ExifTransformer) Transform(ctx *models.DoxxierContext) error {
 
 	if e.GPS != (exif2.GPSInfo{}) {
 		ctx.Metadata.Gps = models.GpsInfo{
-			Latitude:  e.GPS.Latitude(), // Call the function to get the float64 value
+			Latitude:  e.GPS.Latitude(),
 			Longitude: e.GPS.Longitude(),
 			Date:      e.GPS.Date(),
 			Altitude:  e.GPS.Altitude(),

@@ -9,8 +9,8 @@ import (
 	"net/http"
 
 	"doxxier.tech/doxxier/models"
-	"github.com/adrium/goheif"
 	"github.com/gen2brain/avif"
+	"github.com/gen2brain/heic"
 	"github.com/nfnt/resize"
 )
 
@@ -47,7 +47,7 @@ func decode(data []byte) (image.Image, error) {
 	case "application/octet-stream":
 		format := string(data[4:12])
 		if format == "ftypheic" || format == "ftypheix" || format == "ftyphevc" || format == "ftyphevx" || format == "ftypheis" {
-			return goheif.Decode(reader)
+			return heic.Decode(reader)
 		}
 	}
 	return nil, fmt.Errorf("unsupported image type: %s", mimeType)
