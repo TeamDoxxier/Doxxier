@@ -8,15 +8,19 @@ import (
 	"image/png"
 	"net/http"
 
+<<<<<<< Updated upstream
 	"doxxier.tech/doxxier/models"
 	"github.com/adrium/goheif"
+=======
+	"doxxier.tech/doxxier/pkg/models"
+>>>>>>> Stashed changes
 	"github.com/gen2brain/avif"
 	"github.com/nfnt/resize"
 )
 
 type ImageTransformer struct{}
 
-func (t *ImageTransformer) Transform(ctx *models.DoxxierContext) error {
+func (t *ImageTransformer) Transform(ctx *models.DoxxierPart) error {
 	writer := new(bytes.Buffer)
 	defer writer.Reset()
 	reader := bytes.NewReader(ctx.Content)

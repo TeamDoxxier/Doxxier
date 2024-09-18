@@ -21,3 +21,6 @@
 go.work
 go.work.sum
 *DS_Store
+
+doxxier/test_storage/*
+doxxier/vendor/

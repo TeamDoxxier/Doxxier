@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type PrivacyLevel int
 type Priority int
 
@@ -15,11 +17,9 @@ const (
 	PriorityHigh
 )
 
-type DoxxierContext struct {
-	Content         []byte
-	Context         string
-	Descriptiors    map[string]string
-	Priority        Priority
-	PrivacyLevel    PrivacyLevel
-	Transformations []string
+type Metadata struct {
+	Gps              GpsInfo
+	OriginalDateTime time.Time
+	ModifiedDateTime time.Time
+	CreationDateTime time.Time
 }

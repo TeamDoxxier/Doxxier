@@ -1,9 +1,9 @@
 package transformers
 
 import (
-	"doxxier.tech/doxxier/models"
+	"doxxier.tech/doxxier/pkg/models"
 )
 
 type transformer interface {
-	Transform(ctx *models.DoxxierContext) error
+	Transform(ctx *models.DoxxierPart) error
 }
