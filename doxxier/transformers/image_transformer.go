@@ -8,7 +8,7 @@ import (
 	"image/png"
 	"net/http"
 
-	"doxxier.tech/doxxier/models"
+	"doxxier.tech/doxxier/pkg/models"
 	"github.com/adrium/goheif"
 	"github.com/gen2brain/avif"
 	"github.com/nfnt/resize"
