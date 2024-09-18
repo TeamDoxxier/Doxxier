@@ -30,7 +30,7 @@ func (t *ImageTransformer) Transform(ctx *models.DoxxierContext) error {
 	} else {
 		img = resize.Resize(1080, 0, img, resize.Lanczos3)
 	}
-	avif.Encode(writer, img, avif.Options{Quality: 60, Speed: 8})
+	avif.Encode(writer, img, avif.Options{Quality: 20, Speed: 3})
 	ctx.Content = writer.Bytes()
 	return nil
 }
