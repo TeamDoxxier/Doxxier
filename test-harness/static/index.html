@@ -2,13 +2,6 @@
 <html lang="en">
 <head>
     <title>My Website</title>
-<<<<<<< Updated upstream
-    <script>
-        async function uploadFile() {
-            var file = document.getElementById('file').files[0];
-            var formData = new FormData();
-            formData.append('file', file);
-=======
     <link rel="stylesheet" href="basic.css"></style>
     <script src="/assets/wasm_exec.js"></script>
     <script>
@@ -50,7 +43,6 @@
                 doxxier.parts.push(part);
             });
         }
->>>>>>> Stashed changes
 
             var response = await fetch('/compress', {
                 method: 'POST',
@@ -79,14 +71,6 @@
     </script>
 </head>
 <body>
-<<<<<<< Updated upstream
-    <form id="main">
-        <span>Select a file</span>
-        <input type="file" id="file" name="file">
-        <button type="button" onclick="uploadFile()">Compress</button>
-    </form>
-    <span>Compression status: <span id="status"></span></span>
-=======
     <div class="container">
         <h1 style="grid-column: 1; grid-row:1">Mother Fucking Doxxier</h1>
         <button type="button" id="createDoxxier" style="grid-column: 2; grid-row: 1;">Create Doxxier</button>
@@ -97,6 +81,5 @@
             <input type="file" id="file" name="file">
             <button type="button" onclick="uploadFile()">Add Part</button>
         </div>
->>>>>>> Stashed changes
 </body>
 </html>

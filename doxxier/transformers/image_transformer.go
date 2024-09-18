@@ -8,12 +8,8 @@ import (
 	"image/png"
 	"net/http"
 
-<<<<<<< Updated upstream
 	"doxxier.tech/doxxier/models"
 	"github.com/adrium/goheif"
-=======
-	"doxxier.tech/doxxier/pkg/models"
->>>>>>> Stashed changes
 	"github.com/gen2brain/avif"
 	"github.com/nfnt/resize"
 )

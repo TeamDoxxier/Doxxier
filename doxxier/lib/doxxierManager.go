@@ -25,4 +25,5 @@ func (dm *DoxxierManager) SendDoxxier() error {
 	if dm.Doxxier.Recipient == "" {
 		return errors.New("Recipient not set")
 	}
+	return nil
 }

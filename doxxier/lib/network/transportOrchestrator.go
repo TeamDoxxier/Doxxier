@@ -19,5 +19,5 @@ func GetTransportation(privacyLevel PrivacyLevel) Transport {
 }
 
 func NewTransportOrchestrator() {
-	registerTransport(HIGH, cmi())
+	registerTransport(HIGH, CmixxE2eTransport{})
 }
