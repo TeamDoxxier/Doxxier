@@ -1,9 +1,6 @@
 package main
 
 func main() {
-<<<<<<< Updated upstream
-	// This is a placeholder for the main function
-=======
 	jsWriter := jsConsoleWriter{}
 	_, _, cleanup := redirectOutput(jsWriter)
 	defer cleanup()
@@ -18,5 +15,4 @@ func main() {
 	js.Global().Set("addPart", js.FuncOf(wasm.AddPart))
 	js.Global().Set("getPart", js.FuncOf(wasm.GetPart))
 	<-make(chan bool)
->>>>>>> Stashed changes
 }
