@@ -2,11 +2,55 @@
 <html lang="en">
 <head>
     <title>My Website</title>
+<<<<<<< Updated upstream
     <script>
         async function uploadFile() {
             var file = document.getElementById('file').files[0];
             var formData = new FormData();
             formData.append('file', file);
+=======
+    <link rel="stylesheet" href="basic.css"></style>
+    <script src="/assets/wasm_exec.js"></script>
+    <script>
+        let doxxier = null;
+        let btnCreate = null;
+        let btnSetDescription = null;
+        
+        async function createDoxxier() {
+            console.log("Creating Doxxier");
+            jsonDoxxier = window.createDoxxier();
+            if(jsonDoxxier !== null){
+                doxxier = JSON.parse(jsonDoxxier);
+                console.log(doxxier);
+                btnSetDescription.disabled = false;
+            }   
+        }
+
+        async function setDescription() {
+            var description = document.getElementById('description').value;
+            doxxier.description = description;
+            jsonDoxxier = window.updateDoxxier(doxxier)
+            if(jsonDoxxier !== null){
+                doxxier = JSON.parse(jsonDoxxier);
+                console.log(doxxier);
+            }
+        }
+
+        async function uploadFile() {
+            var file = document.getElementById('file').files[0];
+            console.log(file);
+            getFileBytes(file).then(bytes => {
+                var result = window.addPart(bytes);
+                part = JSON.parse(result);
+                part.content = bytes;
+                console.log(part);
+                if(doxxier.parts === null){
+                    doxxier.parts = [];
+                }
+                doxxier.parts.push(part);
+            });
+        }
+>>>>>>> Stashed changes
 
             var response = await fetch('/compress', {
                 method: 'POST',
@@ -17,14 +61,42 @@
                 document.getElementById('status').innerText = data.length;
             };
         }
+        document.onreadystatechange = function () {
+            if (document.readyState === "complete") {
+
+                const go = new Go();
+                btnCreate = document.getElementById('createDoxxier');
+                btnSetDescription = document.getElementById('setDescription');
+
+                WebAssembly.instantiateStreaming(fetch('/assets/doxxier.wasm'), go.importObject).then(result => {
+                    go.run(result.instance);
+                }).catch(console.error);
+
+                btnCreate.addEventListener('click', createDoxxier);
+                btnSetDescription.addEventListener('click', setDescription);
+            }
+        }   
     </script>
 </head>
 <body>
+<<<<<<< Updated upstream
     <form id="main">
         <span>Select a file</span>
         <input type="file" id="file" name="file">
         <button type="button" onclick="uploadFile()">Compress</button>
     </form>
     <span>Compression status: <span id="status"></span></span>
+=======
+    <div class="container">
+        <h1 style="grid-column: 1; grid-row:1">Mother Fucking Doxxier</h1>
+        <button type="button" id="createDoxxier" style="grid-column: 2; grid-row: 1;">Create Doxxier</button>
+        <input type="text" id="description" name="description" style="grid-column: 1; grid-row: 2;">
+        <button type="button" id="setDescription" style="grid-column: 2; grid-row: 2;" disabled>Set Description</button>
+        <div style="grid-column: 1 / 2; grid-row: 3;">
+            <span>Select a file</span>
+            <input type="file" id="file" name="file">
+            <button type="button" onclick="uploadFile()">Add Part</button>
+        </div>
+>>>>>>> Stashed changes
 </body>
 </html>

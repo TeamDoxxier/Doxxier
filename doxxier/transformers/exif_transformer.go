@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"doxxier.tech/doxxier/models"
+	"doxxier.tech/doxxier/pkg/models"
 	"github.com/evanoberholster/imagemeta"
 	"github.com/evanoberholster/imagemeta/exif2"
 )
@@ -12,7 +12,7 @@ import (
 // ExifTransformer is a transformer that extracts EXIF data from an image.
 type ExifTransformer struct{}
 
-func (t *ExifTransformer) Transform(ctx *models.DoxxierContext) error {
+func (t *ExifTransformer) Transform(ctx *models.DoxxierPart) error {
 	reader := bytes.NewReader(ctx.Content)
 
 	e, err := imagemeta.Decode(reader)
