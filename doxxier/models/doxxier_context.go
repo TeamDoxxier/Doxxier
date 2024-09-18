@@ -17,16 +17,6 @@ const (
 	PriorityHigh
 )
 
-type DoxxierContext struct {
-	Content         []byte
-	Context         string
-	Descriptiors    map[string]string
-	Priority        Priority
-	PrivacyLevel    PrivacyLevel
-	Transformations []string
-	Metadata        Metadata
-}
-
 type Metadata struct {
 	Gps              GpsInfo
 	OriginalDateTime time.Time

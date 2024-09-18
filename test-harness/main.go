@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"doxxier.tech/doxxier/compression"
-	"doxxier.tech/doxxier/models"
+	"doxxier.tech/doxxier/pkg/models"
 	"doxxier.tech/doxxier/transformers"
 )
 
@@ -38,7 +38,7 @@ func convertImage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := &models.DoxxierContext{ // Pass a pointer to ctx
+	ctx := &models.DoxxierPart{ // Pass a pointer to ctx
 		Content: content,
 	}
 	err = (&transformers.ImageTransformer{}).Transform(ctx) // Pass ctx as a pointer

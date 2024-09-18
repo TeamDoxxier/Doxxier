@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+option go_package = "doxxier.tech/lib/network/cmixx";
+
+package cmixx;
+
+message DirectMessage {
+	uint32 PayloadType = 1;
+	uint32 DmToken = 2;
+	uint64 RoundId = 3;
+	bytes Payload = 4;
+	int64 LocalTimestamp = 5;
+	bytes Nonce = 6;
+}

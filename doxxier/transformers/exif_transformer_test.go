@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"doxxier.tech/doxxier/models"
+	"doxxier.tech/doxxier/pkg/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,7 +12,7 @@ func TestExifTransformer_Transform(t *testing.T) {
 	for _, i := range test_images {
 		t.Run(i.filename, func(t *testing.T) {
 			exifTransformer := ExifTransformer{}
-			ctx := &models.DoxxierContext{}
+			ctx := &models.DoxxierPart{}
 			f, err := os.ReadFile(dir + i.filename)
 			if err != nil {
 				t.Errorf("Error reading file: %v", err)
@@ -31,7 +31,7 @@ func TestExifTransformer_Transform_Has_Gps(t *testing.T) {
 		if i.hasExif == true {
 			t.Run(i.filename, func(t *testing.T) {
 				exifTransformer := ExifTransformer{}
-				ctx := &models.DoxxierContext{}
+				ctx := &models.DoxxierPart{}
 				f, err := os.ReadFile(dir + i.filename)
 				if err != nil {
 					t.Errorf("Error reading file: %v", err)
@@ -47,7 +47,7 @@ func TestExifTransformer_Transform_Has_Gps(t *testing.T) {
 
 func TestExifTransformer_Transform_Correct_Dates(t *testing.T) {
 	exifTransformer := ExifTransformer{}
-	ctx := &models.DoxxierContext{}
+	ctx := &models.DoxxierPart{}
 	f, err := os.ReadFile(dir + "heic-with-metadata.heic")
 	if err != nil {
 		t.Errorf("Error reading file: %v", err)
@@ -64,7 +64,7 @@ func TestExifTransformer_Transform_ErrNoExif(t *testing.T) {
 		if i.hasExif == false {
 			t.Run(i.filename, func(t *testing.T) {
 				exifTransformer := ExifTransformer{}
-				ctx := &models.DoxxierContext{}
+				ctx := &models.DoxxierPart{}
 				f, err := os.ReadFile(dir + i.filename)
 				if err != nil {
 					t.Errorf("Error reading file: %v", err)
