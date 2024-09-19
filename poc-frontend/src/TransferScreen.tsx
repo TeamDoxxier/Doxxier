@@ -1,14 +1,9 @@
 import React from 'react';
 import './TransferScreen.css';
-
-interface FileThumbnail {
-  url: string;
-  name: string;
-  isImage: boolean;
-}
+import { FileThumbnail } from './types/Doxxier';
 
 interface TransferScreenProps {
-  doxxierId: number;
+  doxxierId: string;
   description: string;
   thumbnails: FileThumbnail[];
   thumbnailProgress: number[]; // Individual file progress
@@ -35,10 +30,10 @@ const TransferScreen: React.FC<TransferScreenProps> = ({
       <div className="thumbnail-section">
         {/* Display thumbnails with simulated progress */}
         {thumbnails.map((thumbnail, idx) => (
-          <div key={idx} className="thumbnail-container" title={thumbnail.name}>
-            {thumbnail.isImage ? (
+          <div key={idx} className="thumbnail-container" title={thumbnail.Name}>
+            {thumbnail.IsImage ? (
               <div className="thumbnail-wrapper">
-                <img src={thumbnail.url} alt="thumbnail" className="thumbnail" />
+                <img src={thumbnail.Url} alt="thumbnail" className="thumbnail" />
                 {/* Overlay to show the progress */}
                 <div
                   className="thumbnail-progress-overlay"
@@ -47,7 +42,7 @@ const TransferScreen: React.FC<TransferScreenProps> = ({
               </div>
             ) : (
               <div className="thumbnail-wrapper">
-                <div className="file-placeholder">{thumbnail.name.split('.').pop()}</div>
+                <div className="file-placeholder">{thumbnail.Name.split('.').pop()}</div>
                 {/* Overlay to show the progress */}
                 <div
                   className="thumbnail-progress-overlay"

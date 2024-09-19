@@ -1,25 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import TransferScreen from './TransferScreen';
-
-interface FileThumbnail {
-  url: string;
-  name: string;
-  isImage: boolean;
-}
-
-interface Doxxier {
-  id: number;
-  original: string;
-  packaged: string;
-  estimatedDelivery: string;
-  isRevealed: boolean;
-  isTransferring: boolean;
-  progress: number; // Overall transfer progress
-  description: string;
-  thumbnails: FileThumbnail[];
-  thumbnailProgress: number[]; // Individual file progress
-}
+import {Doxxier, FileThumbnail} from './types/Doxxier';
 
 const App: React.FC = () => {
   const [doxxiers, setDoxxiers] = useState<Doxxier[]>([]);
@@ -53,19 +35,19 @@ const App: React.FC = () => {
   }, [isConnected]);
 
   // Toggle the visibility of a Doxxier's content
-  const handleToggle = (id: number) => {
+  const handleToggle = (id: string) => {
     setDoxxiers((prevDoxxiers) =>
       prevDoxxiers.map((doxxier) =>
-        doxxier.id === id ? { ...doxxier, isRevealed: !doxxier.isRevealed } : doxxier
+        doxxier.Id === id ? { ...doxxier, isRevealed: !doxxier.IsRevealed } : doxxier
       )
     );
   };
 
   // Handle description input change
-  const handleDescriptionChange = (id: number, value: string) => {
+  const handleDescriptionChange = (id: string, value: string) => {
     setDoxxiers((prevDoxxiers) =>
       prevDoxxiers.map((doxxier) =>
-        doxxier.id === id ? { ...doxxier, description: value } : doxxier
+        doxxier.Id === id ? { ...doxxier, description: value } : doxxier
       )
     );
   };
@@ -84,9 +66,9 @@ const App: React.FC = () => {
       const fileThumbnails: FileThumbnail[] = files.map((file) => {
         const isImage = file.type.startsWith('image/');
         return {
-          url: isImage ? URL.createObjectURL(file) : '',
-          name: file.name,
-          isImage,
+          Url: isImage ? URL.createObjectURL(file) : '',
+          Name: file.name,
+          IsImage: isImage,
         };
       });
 
@@ -95,8 +77,8 @@ const App: React.FC = () => {
           i === index
             ? {
                 ...doxxier,
-                thumbnails: [...doxxier.thumbnails, ...fileThumbnails],
-                thumbnailProgress: [...doxxier.thumbnailProgress, ...Array(files.length).fill(0)], // Initialize progress for new files
+                thumbnails: [...doxxier.Thumbnails, ...fileThumbnails],
+                thumbnailProgress: [...doxxier.ThumbnailProgress, ...Array(files.length).fill(0)], // Initialize progress for new files
               }
             : doxxier
         )
@@ -105,14 +87,14 @@ const App: React.FC = () => {
   };
 
   // Remove a specific file thumbnail
-  const handleRemoveThumbnail = (doxxierId: number, thumbnailIndex: number) => {
+  const handleRemoveThumbnail = (doxxierId: string, thumbnailIndex: number) => {
     setDoxxiers((prevDoxxiers) =>
       prevDoxxiers.map((doxxier) =>
-        doxxier.id === doxxierId
+        doxxier.Id === doxxierId
           ? {
               ...doxxier,
-              thumbnails: doxxier.thumbnails.filter((_, index) => index !== thumbnailIndex),
-              thumbnailProgress: doxxier.thumbnailProgress.filter((_, index) => index !== thumbnailIndex),
+              thumbnails: doxxier.Thumbnails.filter((_, index) => index !== thumbnailIndex),
+              thumbnailProgress: doxxier.ThumbnailProgress.filter((_, index) => index !== thumbnailIndex),
             }
           : doxxier
       )
@@ -121,29 +103,34 @@ const App: React.FC = () => {
 
   // Create a new Doxxier container and auto-expand it
   const handleCreateNewDoxxier = () => {
-    const newId = doxxiers.length + 1;
-    setDoxxiers([
-      ...doxxiers,
-      {
-        id: newId,
-        original: '200MB',
-        packaged: '2KB',
-        estimatedDelivery: '3 days',
-        isRevealed: true,
-        isTransferring: false,
-        progress: 0,
-        description: '',
-        thumbnails: [],
-        thumbnailProgress: [], // Initialize with empty progress
-      },
-    ]);
+      // Call the CreateDoxxier function from the Wasm module
+      const doxxierData = window.CreateDoxxier();
+
+      const goDoxxier = JSON.parse(doxxierData) as Doxxier;
+      console.log('Wasm CreateDoxxier result:', doxxierData);
+
+      const newDoxxier: Doxxier = {
+        Id: goDoxxier.Id , // Use the ID from the Wasm module or fallback to newId
+        Description: `Doxxier ${goDoxxier.Id}`,
+        Original: '200MB', // Example values; use `doxxierData` if it returns these
+        Packaged: '2KB',
+        EstimatedDelivery: '3 days',
+        IsTransferring: false,
+        Progress: 0,
+        Thumbnails: [],
+        ThumbnailProgress: [],
+        IsRevealed: true,
+        Parts: [],
+        CreatedAt: goDoxxier.CreatedAt,
+      };
+      setDoxxiers([...doxxiers, newDoxxier]);
   };
 
   // Handle 'Send' button click to start the transfer simulation
-  const handleSend = (id: number) => {
+  const handleSend = (id: string) => {
     setDoxxiers((prevDoxxiers) =>
       prevDoxxiers.map((doxxier) =>
-        doxxier.id === id ? { ...doxxier, isTransferring: true } : doxxier
+        doxxier.Id === id ? { ...doxxier, isTransferring: true } : doxxier
       )
     );
 
@@ -152,14 +139,14 @@ const App: React.FC = () => {
   };
 
   // Simulate the transfer of files in a Doxxier container
-  const simulateTransfer = (doxxierId: number) => {
+  const simulateTransfer = (doxxierId: string) => {
     let currentFile = 0;
 
     const interval = setInterval(() => {
       setDoxxiers((prevDoxxiers) => {
         return prevDoxxiers.map((doxxier) => {
-          if (doxxier.id === doxxierId) {
-            const newThumbnailProgress = [...doxxier.thumbnailProgress];
+          if (doxxier.Id === doxxierId) {
+            const newThumbnailProgress = [...doxxier.ThumbnailProgress];
 
             // Increment the progress of the current file
             if (newThumbnailProgress[currentFile] < 100) {
@@ -191,42 +178,42 @@ const App: React.FC = () => {
   };
 
   // Remove a specific Doxxier container
-  const handleRemoveDoxxier = (id: number) => {
-    setDoxxiers((prevDoxxiers) => prevDoxxiers.filter((doxxier) => doxxier.id !== id));
+  const handleRemoveDoxxier = (id: string) => {
+    setDoxxiers((prevDoxxiers) => prevDoxxiers.filter((doxxier) => doxxier.Id !== id));
   };
 
   return (
     <div className="app-container">
       <div className="doxxier-list-container">
         {doxxiers.map((doxxier, index) => (
-          <div key={doxxier.id} className="doxxier-container">
-            {doxxier.isTransferring ? (
+          <div key={doxxier.Id} className="doxxier-container">
+            {doxxier.IsTransferring ? (
               <TransferScreen
-                doxxierId={doxxier.id}
-                description={doxxier.description}
-                thumbnails={doxxier.thumbnails}
-                onClose={() => handleRemoveDoxxier(doxxier.id)}
-                thumbnailProgress={doxxier.thumbnailProgress}
-                overallProgress={doxxier.progress}
+                doxxierId={doxxier.Id}
+                description={doxxier.Description}
+                thumbnails={doxxier.Thumbnails}
+                onClose={() => handleRemoveDoxxier(doxxier.Id)}
+                thumbnailProgress={doxxier.ThumbnailProgress}
+                overallProgress={doxxier.Progress}
               />
             ) : (
               <>
                 <div className="header">
-                  <span className="title clickable" onClick={() => handleToggle(doxxier.id)}>
-                    Doxxier {doxxier.id} {doxxier.isRevealed ? '▲' : '▼'}
+                  <span className="title clickable" onClick={() => handleToggle(doxxier.Id)}>
+                    Doxxier {doxxier.Id} {doxxier.IsRevealed ? '▲' : '▼'}
                   </span>
-                  <button className="remove-button" onClick={() => handleRemoveDoxxier(doxxier.id)}>
+                  <button className="remove-button" onClick={() => handleRemoveDoxxier(doxxier.Id)}>
                     X
                   </button>
                 </div>
 
-                <div className={`content-section ${doxxier.isRevealed ? 'revealed' : 'hidden'}`}>
+                <div className={`content-section ${doxxier.IsRevealed ? 'revealed' : 'hidden'}`}>
                   <input
                     type="text"
                     className="description-input"
                     placeholder="Enter description"
-                    value={doxxier.description}
-                    onChange={(e) => handleDescriptionChange(doxxier.id, e.target.value)}
+                    value={doxxier.Description}
+                    onChange={(e) => handleDescriptionChange(doxxier.Id, e.target.value)}
                   />
 
                   <div className="add-section">
@@ -242,16 +229,16 @@ const App: React.FC = () => {
                       accept="image/*,.doc,.pdf,.txt"
                     />
                     {/* Render thumbnails and placeholders */}
-                    {doxxier.thumbnails.map((thumbnail, idx) => (
+                    {doxxier.Thumbnails.map((thumbnail, idx) => (
                       <div key={idx} className="thumbnail-container">
-                        {thumbnail.isImage ? (
-                          <img src={thumbnail.url} alt="thumbnail" className="thumbnail" />
+                        {thumbnail.IsImage ? (
+                          <img src={thumbnail.Url} alt="thumbnail" className="thumbnail" />
                         ) : (
-                          <div className="file-placeholder">{thumbnail.name.split('.').pop()}</div>
+                          <div className="file-placeholder">{thumbnail.Name.split('.').pop()}</div>
                         )}
                         <button
                           className="thumbnail-remove-button"
-                          onClick={() => handleRemoveThumbnail(doxxier.id, idx)}
+                          onClick={() => handleRemoveThumbnail(doxxier.Id, idx)}
                         >
                           ×
                         </button>
@@ -260,13 +247,13 @@ const App: React.FC = () => {
                   </div>
 
                   <div className="status-section">
-                    <p className="label">Original: {doxxier.original}</p>
-                    <p className="label">Packaged: {doxxier.packaged}</p>
-                    <p className="label">Estimated delivery: {doxxier.estimatedDelivery}</p>
+                    <p className="label">Original: {doxxier.Original}</p>
+                    <p className="label">Packaged: {doxxier.Packaged}</p>
+                    <p className="label">Estimated delivery: {doxxier.EstimatedDelivery}</p>
                   </div>
 
                   <div className="footer">
-                    <button className="send-button" onClick={() => handleSend(doxxier.id)}>
+                    <button className="send-button" onClick={() => handleSend(doxxier.Id)}>
                       Send
                     </button>
                     <button className="save-button">Save</button>

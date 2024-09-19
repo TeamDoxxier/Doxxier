@@ -53,10 +53,10 @@ func main() {
 	println("This will be logged to the JavaScript console as stdout")
 	os.Stderr.WriteString("This will be logged to the JavaScript console as stderr\n")
 
-	js.Global().Set("createDoxxier", js.FuncOf(wasm.CreateDoxxier))
-	js.Global().Set("getDoxxier", js.FuncOf(wasm.GetDoxxier))
-	js.Global().Set("updateDoxxier", js.FuncOf(wasm.UpdateDoxxier))
-	js.Global().Set("addPart", js.FuncOf(wasm.AddPart))
-	js.Global().Set("getPart", js.FuncOf(wasm.GetPart))
+	js.Global().Set("CreateDoxxier", js.FuncOf(wasm.CreateDoxxier))
+	js.Global().Set("GetDoxxier", js.FuncOf(wasm.GetDoxxier))
+	js.Global().Set("UpdateDoxxier", js.FuncOf(wasm.UpdateDoxxier))
+	js.Global().Set("AddPart", js.FuncOf(wasm.AddPart))
+	js.Global().Set("GetPart", js.FuncOf(wasm.GetPart))
 	<-make(chan bool)
 }

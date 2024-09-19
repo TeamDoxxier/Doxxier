@@ -4,12 +4,15 @@ import ReactDOM from 'react-dom/client'; // Import createRoot from 'react-dom/cl
 import { BrowserRouter } from 'react-router-dom'; // Make sure to wrap App in BrowserRouter here
 import App from './App';
 import './index.css';
+import { LoadWasm } from './wasm/WasmLoader';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
   <React.StrictMode>
-    <BrowserRouter> {/* Wrap the entire app in BrowserRouter */}
-      <App />
-    </BrowserRouter>
+    <LoadWasm>
+      <BrowserRouter> {/* Wrap the entire app in BrowserRouter */}
+        <App />
+      </BrowserRouter>
+    </LoadWasm>
   </React.StrictMode>
 );

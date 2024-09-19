@@ -34,12 +34,8 @@ func DoxxierWithParts(parts []DoxxierPart) DoxxierOption {
 }
 
 func NewDoxxier(params ...DoxxierOption) *Doxxier {
-	if len(params) == 0 {
-		return &Doxxier{
-			Id: uuid.New().String(),
-		}
-	}
 	doxxier := &Doxxier{
+		Id:        uuid.New().String(),
 		CreatedAt: time.Now(),
 	}
 	for _, opt := range params {

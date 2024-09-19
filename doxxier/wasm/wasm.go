@@ -3,10 +3,10 @@ package wasm
 import (
 	"syscall/js"
 
-	"doxxier.tech/doxxier/pkg/models"
+	"doxxier.tech/doxxier/lib"
 )
 
-var doxxier *models.Doxxier
+var doxxierManager lib.DoxxierManager
 
 // JSGlobal is an interface to abstract the js.Global() function
 type JSGlobal interface {
@@ -28,27 +28,19 @@ func (d DefaultJSGlobal) Set(key string, value js.Value) {
 var global JSGlobal = DefaultJSGlobal{}
 
 func CreateDoxxier(_ js.Value, args []js.Value) any {
-	doxxier = models.NewDoxxier()
-	json, _ := doxxier.ToJson()
+	doxxierManager = *lib.NewDoxxierManager()
+	json, _ := doxxierManager.GetDoxxier().ToJson()
 	return js.ValueOf(json)
 }
 
 func GetDoxxier(_ js.Value, args []js.Value) any {
-	if doxxier == nil {
-		return CreateDoxxier(js.Null(), nil)
-	}
-
-	json, _ := doxxier.ToJson()
+	json, _ := doxxierManager.GetDoxxier().ToJson()
 	return js.ValueOf(json)
 }
 
 func UpdateDoxxier(_ js.Value, args []js.Value) any {
-	if doxxier == nil {
-		return js.Null()
-	}
-
 	jsDoxxier := args[0]
-
+	doxxier := doxxierManager.GetDoxxier()
 	doxxier.Description = jsDoxxier.Get("description").String()
 	doxxier.Recipient = jsDoxxier.Get("recipient").String()
 
@@ -57,18 +49,17 @@ func UpdateDoxxier(_ js.Value, args []js.Value) any {
 }
 
 func AddPart(_ js.Value, args []js.Value) any {
-	part := models.NewDoxxierPart()
+	part := doxxierManager.AddPart()
 	byteArray := make([]byte, args[0].Length())
 	js.CopyBytesToGo(byteArray, args[0])
 	part.Content = byteArray
-	doxxier.AddPart(*part)
 	json, _ := part.ToJson()
 	return js.ValueOf(json)
 }
 
 func GetPart(_ js.Value, args []js.Value) any {
 	id := args[0].String()
-
+	doxxier := doxxierManager.GetDoxxier()
 	part := doxxier.GetPart(id)
 	if part == nil {
 		return js.Null()

@@ -1,4 +1,4 @@
-package Foundation
+package lib
 
 import (
 	"errors"
@@ -7,22 +7,32 @@ import (
 )
 
 type DoxxierManager struct {
-	Doxxier *models.Doxxier
+	doxxier *models.Doxxier
 }
 
 func NewDoxxierManager() *DoxxierManager {
 	return &DoxxierManager{
-		Doxxier: models.NewDoxxier(),
+		doxxier: models.NewDoxxier(),
 	}
 }
 
-func (dm *DoxxierManager) AddPart(part models.DoxxierPart) *models.Doxxier {
-	dm.Doxxier.Parts = append(dm.Doxxier.Parts, part)
-	return dm.Doxxier
+func (dm *DoxxierManager) GetDoxxier() *models.Doxxier {
+	return dm.doxxier
+}
+
+func (dm *DoxxierManager) AddPart() *models.DoxxierPart {
+	part := models.NewDoxxierPart()
+	dm.doxxier.AddPart(*part)
+	return part
+}
+
+func (dm *DoxxierManager) GetPart(id string) *models.DoxxierPart {
+	part := dm.doxxier.GetPart(id)
+	return part
 }
 
 func (dm *DoxxierManager) SendDoxxier() error {
-	if dm.Doxxier.Recipient == "" {
+	if dm.doxxier.Recipient == "" {
 		return errors.New("Recipient not set")
 	}
 	return nil
