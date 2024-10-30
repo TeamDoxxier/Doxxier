@@ -8,12 +8,8 @@ import (
 	"image/png"
 	"net/http"
 
-<<<<<<< Updated upstream
-	"doxxier.tech/doxxier/models"
-	"github.com/adrium/goheif"
-=======
 	"doxxier.tech/doxxier/pkg/models"
->>>>>>> Stashed changes
+	"github.com/adrium/goheif"
 	"github.com/gen2brain/avif"
 	"github.com/nfnt/resize"
 )
@@ -34,7 +30,7 @@ func (t *ImageTransformer) Transform(ctx *models.DoxxierPart) error {
 	} else {
 		img = resize.Resize(1080, 0, img, resize.Lanczos3)
 	}
-	avif.Encode(writer, img, avif.Options{Quality: 20})
+	avif.Encode(writer, img, avif.Options{Quality: 20, Speed: 3})
 	ctx.Content = writer.Bytes()
 	return nil
 }
