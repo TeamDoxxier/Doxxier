@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import TransferScreen from './TransferScreen';
 import {Doxxier, FileThumbnail} from './types/Doxxier';
+import {greet, Respondez} from 'doxxier-transform';
 
 const App: React.FC = () => {
   const [doxxiers, setDoxxiers] = useState<Doxxier[]>([]);
@@ -14,7 +15,9 @@ const App: React.FC = () => {
     let animationInterval: NodeJS.Timeout;
     let statusIndex = 0;
     const statusMessages = ['Connecting to cMixx', 'Connecting to cMixx.', 'Connecting to cMixx..', 'Connecting to cMixx...'];
-    
+
+    console.log(Respondez()); 
+
     if (!isConnected) {
       animationInterval = setInterval(() => {
         statusIndex = (statusIndex + 1) % statusMessages.length;

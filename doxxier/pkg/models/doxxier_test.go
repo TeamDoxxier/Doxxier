@@ -60,7 +60,7 @@ func TestNewDoxxier_WithMultipleOptions(t *testing.T) {
 }
 func TestDoxxier_ToJson(t *testing.T) {
 	doxxier := NewDoxxier()
-	jsonStr := doxxier.ToJson()
+	jsonStr, err := doxxier.ToJson()
 
 	assert.NotEmpty(t, jsonStr)
 	assert.Contains(t, jsonStr, `"Id":"`)
@@ -68,6 +68,7 @@ func TestDoxxier_ToJson(t *testing.T) {
 	assert.Contains(t, jsonStr, `"Recipient":"`)
 	assert.Contains(t, jsonStr, `"TransmissionStart":"`)
 	assert.Contains(t, jsonStr, `"TransmissionEnd":"`)
+	assert.NoError(t, err)
 }
 
 func TestDoxxier_ToJson_WithValues(t *testing.T) {
@@ -88,15 +89,16 @@ func TestDoxxier_ToJson_WithValues(t *testing.T) {
 		TransmissionStart: transmissionStart,
 		TransmissionEnd:   transmissionEnd,
 	}
-	jsonStr := doxxier.ToJson()
+	jsonStr, err := doxxier.ToJson()
 
 	assert.NotEmpty(t, jsonStr)
 	assert.Contains(t, jsonStr, `"id":"`+id+`"`)
 	assert.Contains(t, jsonStr, `"recipient":"`+recipient+`"`)
 	assert.Contains(t, jsonStr, `"transmission_start":"`+transmissionStart.Format(time.RFC3339)+`"`)
 	assert.Contains(t, jsonStr, `"transmission_end":"`+transmissionEnd.Format(time.RFC3339)+`"`)
+	assert.NoError(t, err)
 
-	err := json.Unmarshal([]byte(jsonStr), &doxxier)
+	err = json.Unmarshal([]byte(jsonStr), &doxxier)
 	assert.NoError(t, err)
 	assert.Equal(t, parts[0].Id, doxxier.Parts[0].Id)
 }

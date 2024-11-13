@@ -3,6 +3,7 @@ package network
 import "doxxier.tech/doxxier/pkg/models"
 
 type Transport interface {
-	Connect() error
-	Send(models.Doxxier) error
+	Connect(callbackChan chan string) (string, error)
+	Send(string, models.Doxxier) error
+	Disconnect() error
 }

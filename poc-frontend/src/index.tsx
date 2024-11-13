@@ -9,10 +9,8 @@ import { LoadWasm } from './wasm/WasmLoader';
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
   <React.StrictMode>
-    <LoadWasm>
       <BrowserRouter> {/* Wrap the entire app in BrowserRouter */}
         <App />
       </BrowserRouter>
-    </LoadWasm>
   </React.StrictMode>
 );

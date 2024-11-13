@@ -12,12 +12,5 @@ update:
 	-GOFLAGS="" go get all 
 
 build: 
-	GOOS=js GOARCH=wasm go build  
+	go build  
 
-binary:
-	mkdir -p assets/wasm
-	GOOS=js GOARCH=wasm go build -ldflags '-w -s' -trimpath -o doxxier.wasm main.go
-	cp doxxier.wasm assets/wasm/
-	cp doxxier.wasm ../test-harness/static/assets/
-	cp doxxier.wasm ../poc-frontend/public/assets/
-	rm -rf doxxier.wasm
