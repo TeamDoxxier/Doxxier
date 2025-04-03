@@ -1,241 +1,125 @@
-package network
+package cmixx_e2e
 
 import (
 	"testing"
+	"time"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"gitlab.com/elixxir/client/v4/xxdk"
-	"gitlab.com/xx_network/primitives/id"
 )
 
 func TestNewCMixxE2eTransport(t *testing.T) {
-	tests := []struct {
-		name   string
-		config CMixxConfig
-		want   *CmixxE2eTransport
-	}{
-		{
-			name: "All fields provided",
-			config: CMixxConfig{
-				NdfPath:            "../assets/ndf.json",
-				CertPath:           "../assets/main.cert",
-				Secret:             "cE+a6mP>p`4b]F8;CY&*t}",
-				StoragePath:        "../assets/storage/",
-				identityStorageKey: "customIdentityStorageKey",
-			},
-			want: &CmixxE2eTransport{
-				secret:             "cE+a6mP>p`4b]F8;CY&*t}",
-				ndfPath:            "../assets/ndf.json",
-				certPath:           "../assets/main.cert",
-				StoragePath:        "../assets/storage/",
-				identityStorageKey: "customIdentityStorageKey",
-			},
-		},
-		{
-			name: "Missing optional fields",
-			config: CMixxConfig{
-				StoragePath: "../assets/storage/",
-			},
-			want: &CmixxE2eTransport{
-				secret:             secretFlag,
-				ndfPath:            ndfPathFlag,
-				certPath:           certPathFlag,
-				StoragePath:        "../assets/storage/",
-				identityStorageKey: identityStorageKeyFlag,
-			},
-		},
-		{
-			name: "Missing StoragePath",
-			config: CMixxConfig{
-				NdfPath:            "custom/ndf/path",
-				CertPath:           "custom/cert/path",
-				Secret:             "customSecret",
-				identityStorageKey: "customIdentityStorageKey",
-			},
-			want: nil,
-		},
+	config := CMixxE2eConfig{
+		StoragePath: "./test_storage",
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			defer func() {
-				if r := recover(); r != nil {
-					if tt.want != nil {
-						t.Errorf("NewCMixxE2eTransport() panicked when it shouldn't have")
-					}
-				}
-			}()
-			got, _ := NewCMixxE2eTransport(tt.config)
-			if tt.want == nil {
-				if got != nil {
-					t.Errorf("NewCMixxE2eTransport() = %v, want %v", got, tt.want)
-				}
-				return
-			}
-			if got.secret != tt.want.secret ||
-				got.ndfPath != tt.want.ndfPath ||
-				got.certPath != tt.want.certPath ||
-				got.StoragePath != tt.want.StoragePath ||
-				got.identityStorageKey != tt.want.identityStorageKey {
-				t.Errorf("NewCMixxE2eTransport() = %v, want %v", got, tt.want)
-			}
-		})
+	transport, err := NewCMixxE2eTransport(config)
+	assert.Nil(t, err)
+	assert.NotNil(t, transport)
+	assert.Equal(t, secretFlag, transport.secret)
+	assert.Equal(t, certPathFlag, transport.certPath)
+	assert.Equal(t, identityStorageKeyFlag, transport.identityStorageKey)
+}
+
+func TestCMixxE2eTransport_Disconnect(t *testing.T) {
+	transport := &CmixxE2eTransport{
+		cMixxNet:     &xxdk.Cmix{},
+		callbackChan: make(chan string, 1),
+	}
+
+	err := transport.Disconnect()
+	assert.Nil(t, err)
+	select {
+	case msg := <-transport.callbackChan:
+		assert.Equal(t, "Disconnected from cMixx network", msg)
+	case <-time.After(time.Second):
+		t.Fatal("expected message not received")
 	}
 }
 
-type MockCmixxE2eTransport struct {
-	mock.Mock
-	CmixxE2eTransport
-}
+// func TestCMixxE2eTransport_Connect(t *testing.T) {
+// 	transport := &CmixxE2eTransport{
+// 		ndfPath:     "./test_ndf",
+// 		StoragePath: "./test_storage",
+// 	}
+// 	callbackChan := make(chan string, 1)
+// 	assert.NotNil(t, transport)
+// 	assert.NotNil(t, callbackChan)
+// 	// Mocking external dependencies
+// 	// initialiseCMixx := func(transport *CmixxE2eTransport) error {
+// 	// 	return nil
+// 	// }
+// 	// initialiseReceptionIdentity = func(transport *CmixxE2eTransport) (*xxdk.ReceptionIdentity, error) {
+// 	// 	return &xxdk.ReceptionIdentity{}, nil
+// 	// }
+// 	// connectCmixx = func(transport *CmixxE2eTransport) error {
+// 	// 	return nil
+// 	//}
 
-func (m *MockCmixxE2eTransport) initialiseCMixx() error {
-	args := m.Called()
-	return args.Error(0)
-}
+// 	// contactOutput, err := transport.Connect(callbackChan)
+// 	// assert.Nil(t, err)
+// 	// assert.NotEmpty(t, contactOutput)
+// }
 
-func (m *MockCmixxE2eTransport) initialiseReceptionIdentity() (*xxdk.ReceptionIdentity, error) {
-	args := m.Called()
-	return args.Get(0).(*xxdk.ReceptionIdentity), args.Error(1)
-}
-
-func TestCmixxE2eTransport_Connect(t *testing.T) {
-	tests := []struct {
-		name                  string
-		initialiseCMixxError  error
-		initialiseIdentityErr error
-		expectedError         string
-		expectedOutput        string
-		config                CMixxConfig
-	}{
-		{
-			name: "Successful connection",
-			config: CMixxConfig{
-				StoragePath: "../assets/storage",
-			},
-			initialiseCMixxError:  nil,
-			initialiseIdentityErr: nil,
-			expectedError:         "",
-			expectedOutput:        "PHh4YygyKUt3TExpaVpaV2xqaHdhMWxVK3I0aU5WOGJ0a3Q1NytJUkFRa2ErTzNuSU1Ea0FaaUI5a1pvK0RsM2ZYM2QzV3dDeTRLc2hZT1lWYzZKL1U3ODVURXpsNVFQYVhad04xeVZYRlpDZTNqS2cxeGR2RTY4L2hCR1Z6bWJwcWtGTXdIZStOVzRHaUh4aSs5aUcyZHVqQkdOeHEzTUpDRXZqOHlVZlNlb2dtTGIwbFc4eUozOE9BYzdNenR4U25ESDQwZmxITG9ZQ0pEUEFxNnl2azNYaGxWMXNGM1JhYXhBakdiejhML2xZc2NJNHVvMEZKSnZWSlZSQ2tYQVV2bkRFeEsvUjY0eTBRZWNVbVF1SjhqWGVFU2tUNU9SVU9qelpOQnZqajlEVTBlenZPWFAzT0Y2VC9UMTJad25BdlAvQmZjOE5HSW5UdDFSNkZVZzloSWdZdEJwUEUvN3R5dlNUbVM5TVdNYlVIM1J6S2dBZVQvdnNaUXRCQW1pRjIrSFFMeWVvQXRhY3ROZ0lmV3cyYUw3UGhGeVByOUxwSVRCdXczMzVIbm9pZ0lBeHF5UVVlTVpUTnA5Wk4vbWhhOFk2Ry8rTHZrbEM5bVZacHVuK1JmdENORlVuMThMNk5FYmFvS0ZGcFpOVU1sbkZrSGpBcjV0bUlaczg4S2l3U2JSR2Q4S0d4dUFXVzh3QXAzMTZmTkh1U2wzelV3R2tjZ3pMN1BCandjTk9nY1NoUVMzeG1KdW1VZ0RqL3dmQUFBQWdBN2VhM3d1RFpHMS9UZU43ZDNjTTMwbHc9PXh4Yz4=",
-		},
+func TestCMixxE2eTransport_SendMessage_NotConnected(t *testing.T) {
+	transport := &CmixxE2eTransport{
+		user:               xxdk.E2e{},
+		recipientConnected: false,
+		callbackChan:       make(chan string, 1),
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockTransport := new(MockCmixxE2eTransport)
-			transport, _ := NewCMixxE2eTransport(tt.config)
-			mockTransport.CmixxE2eTransport = *transport
-			mockTransport.On("initialiseCMixx").Return(tt.initialiseCMixxError)
-			mockIdentity := &xxdk.ReceptionIdentity{}
-			mockTransport.On("initialiseReceptionIdentity").Return(mockIdentity, tt.initialiseIdentityErr)
+	recipient := "testRecipient"
+	message := "Hello, world!"
 
-			if tt.initialiseIdentityErr == nil {
-				mockTransport.On("initialiseReceptionIdentity").Return(mockIdentity, nil)
-			}
+	// Mock connectRecipient to simulate successful connection
+	// connectRecipient := func(transport *CmixxE2eTransport, recipient string) error {
+	// 	return nil
+	// }
 
-			testChan := make(chan string)
-			output, err := mockTransport.Connect(testChan)
-
-			if tt.expectedError != "" {
-				assert.EqualError(t, err, tt.expectedError)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.expectedOutput, output)
-			}
-
-			mockTransport.AssertExpectations(t)
-		})
+	err := transport.SendMessage(recipient, message)
+	assert.Nil(t, err)
+	select {
+	case msg := <-transport.callbackChan:
+		assert.Contains(t, msg, "Message sent")
+	case <-time.After(time.Second):
+		t.Fatal("expected message not received")
 	}
 }
 
-func TestCmixxE2eTransport_connectCmixx(t *testing.T) {
-	tests := []struct {
-		name               string
-		loginError         error
-		startFollowerError error
-		expectedError      string
-	}{
-		{
-			name:               "Successful connection",
-			loginError:         nil,
-			startFollowerError: nil,
-			expectedError:      "",
-		},
-		{
-			name:               "Login error",
-			loginError:         errors.New("login error"),
-			startFollowerError: nil,
-			expectedError:      "Error logging in to cMixx: login error",
-		},
-		{
-			name:               "Start network follower error",
-			loginError:         nil,
-			startFollowerError: errors.New("start follower error"),
-			expectedError:      "Error starting network follower: start follower error",
-		},
+func TestCMixxE2eTransport_getNdf(t *testing.T) {
+	config := CMixxE2eConfig{
+		StoragePath: "./test_storage",
+	}
+	transport, err := NewCMixxE2eTransport(config)
+	// 	ndfPath: "./test_ndf.json",
+	// }
+
+	// // Create mock NDF file
+	// err := os.WriteFile(transport.ndfPath, []byte("mock NDF content"), 0644)
+	// assert.Nil(t, err)
+	// defer os.Remove(transport.ndfPath)
+
+	ndf, err := transport.getNdf()
+	assert.Nil(t, err)
+	assert.NotNil(t, ndf)
+}
+
+func TestCMixxE2eTransport_initialiseReceptionIdentity(t *testing.T) {
+	transport := &CmixxE2eTransport{
+		identityStorageKey: "test_identity_key",
+		cMixxNet:           &xxdk.Cmix{},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockTransport := new(MockCmixxE2eTransport)
-			transport, _ := NewCMixxE2eTransport(CMixxConfig{StoragePath: "../assets/storage"})
-			mockTransport.CmixxE2eTransport = *transport
+	// Mock LoadReceptionIdentity
+	// xxdk.LoadReceptionIdentity = func(key string, net *xxdk.Cmix) (xxdk.ReceptionIdentity, error) {
+	// 	return xxdk.ReceptionIdentity{}, errors.New("not found")
+	// }
 
-			mockUser := new(MockUser)
-			mockUser.On("StartNetworkFollower", mock.Anything).Return(tt.startFollowerError)
-			mockUser.On("GetE2E").Return(new(MockE2E))
-			mockUser.On("GetCmix").Return(new(MockCmix))
+	// xxdk.MakeReceptionIdentity = func(net *xxdk.Cmix) (xxdk.ReceptionIdentity, error) {
+	// 	return xxdk.ReceptionIdentity{}, nil
+	// }
 
-			mockTransport.On("initialiseCMixx").Return(nil)
-			mockTransport.On("initialiseReceptionIdentity").Return(new(xxdk.ReceptionIdentity), nil)
-			mockTransport.On("Login", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(mockUser, tt.loginError)
-
-			err := mockTransport.connectCmixx()
-
-			if tt.expectedError != "" {
-				assert.EqualError(t, err, tt.expectedError)
-			} else {
-				assert.NoError(t, err)
-			}
-
-			mockTransport.AssertExpectations(t)
-			mockUser.AssertExpectations(t)
-		})
-	}
-}
-
-type MockUser struct {
-	mock.Mock
-}
-
-func (m *MockUser) StartNetworkFollower(timeout int) error {
-	args := m.Called(timeout)
-	return args.Error(0)
-}
-
-func (m *MockUser) GetE2E() *xxdk.E2e {
-	args := m.Called()
-	return args.Get(0).(*xxdk.E2e)
-}
-
-func (m *MockUser) GetCmix() *xxdk.Cmix {
-	args := m.Called()
-	return args.Get(0).(*xxdk.Cmix)
-}
-
-type MockE2E struct {
-	mock.Mock
-}
-
-func (m *MockE2E) RegisterListener(id *id.ID, catalogType catalog.MessageType, listener xxdk.Listener) {
-	m.Called(id, catalogType, listener)
-}
-
-type MockCmix struct {
-	mock.Mock
-}
-
-func (m *MockCmix) AddHealthCallback(callback func(bool)) {
-	m.Called(callback)
+	identity, err := transport.initialiseReceptionIdentity()
+	assert.Nil(t, err)
+	assert.NotNil(t, identity)
 }

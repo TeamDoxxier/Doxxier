@@ -1,71 +1,109 @@
 package main
 
 import (
-	"encoding/json"
 	"testing"
 
-	"doxxier.tech/doxxier/pkg/models"
+	"doxxier.tech/doxxier/lib"
+	mockjs "doxxier.tech/wasm/internal/testing"
+	"github.com/stretchr/testify/assert"
 )
 
-// Mock implementation for testing
-type MockJSGlobal struct {
-	values map[string]interface{}
-}
+func TestOnEvent(t *testing.T) {
+	// Create a mock global object
+	mockGlobal := mockjs.ValueOf(map[string]interface{}{
+		"console": mockjs.ValueOf(map[string]interface{}{
+			"log": func(args ...mockjs.Value) mockjs.Value {
+				assert.Equal(t, "test message", args[0].String())
+				return mockjs.Undefined
+			},
+		}),
+	})
 
-func (m *MockJSGlobal) Get(key string) interface{} {
-	return m.values[key]
-}
-
-func (m *MockJSGlobal) Set(key string, value interface{}) {
-	m.values[key] = value
-}
-
-var mockGlobal JSGlobal = &MockJSGlobal{values: make(map[string]interface{})}
-
-func TestCreateDoxxier(t *testing.T) {
-	mockGlobal := &MockJSGlobal{values: make(map[string]interface{})}
+	// Set the mock global to a package-level variable
 	global = mockGlobal
 
-	CreateDoxxier(nil, nil)
-
-	doxxierValue := mockGlobal.Get("doxxier")
-	if doxxierValue == nil {
-		t.Fatalf("Expected doxxier to be set in global, but it was not")
-	}
-
-	var doxxier models.Doxxier
-	err := json.Unmarshal([]byte(doxxierValue.(string)), &doxxier)
-	if err != nil {
-		t.Fatalf("Error unmarshalling doxxier: %v", err)
-	}
-
-	if doxxier.Id == "" && len(doxxier.Parts) == 0 {
-		t.Fatalf("Expected doxxier to be initialized, but it was empty")
-	}
+	// Call the function being tested
+	OnEvent("test message")
 }
 
-func TestAddPart(t *testing.T) {
-	mockGlobal := &MockJSGlobal{values: make(map[string]interface{})}
+func TestOnMessage(t *testing.T) {
+	// Create a mock global object
+	mockGlobal := mockjs.ValueOf(map[string]interface{}{
+		"console": mockjs.ValueOf(map[string]interface{}{
+			"log": func(args ...mockjs.Value) mockjs.Value {
+				assert.Equal(t, "test message", args[0].String())
+				return mockjs.Undefined
+			},
+		}),
+	})
 
-	// Initialize doxxier in global
-	doxxier := models.NewDoxxier()
-	doxxierJSON, _ := json.Marshal(doxxier)
-	mockGlobal.Set("doxxier", string(doxxierJSON))
+	// Set the mock global to a package-level variable
+	global = mockGlobal
 
-	AddPart(nil, nil)
+	// Simulate the callback channel
+	callbackChan = make(chan string, 1)
+	callbackChan <- "test message"
 
-	doxxierValue := mockGlobal.Get("doxxier")
-	if doxxierValue == nil {
-		t.Fatalf("Expected doxxier to be set in global, but it was not")
+	// Call the function being tested
+	go onMessage()
+}
+
+func TestCreateDoxxier(t *testing.T) {
+	// Create a mock global object
+	mockGlobal := mockjs.ValueOf(map[string]interface{}{})
+	global = mockGlobal
+
+	// Mock the library function
+	// lib.NewDoxxierManager = func(callback func(string)) *lib.DoxxierManager {
+	// 	return &lib.DoxxierManager{}
+	// }
+
+	// Call the function being tested
+	result := CreateDoxxier(mockjs.ValueOf(nil), nil)
+	assert.NotNil(t, result)
+}
+
+func TestGetDoxxier(t *testing.T) {
+	// Mock the DoxxierManager with a sample Doxxier
+	doxxierManager := &lib.DoxxierManager{
+		// Add mock methods if required
 	}
 
-	var updatedDoxxier models.Doxxier
-	err := json.Unmarshal([]byte(doxxierValue.(string)), &updatedDoxxier)
-	if err != nil {
-		t.Fatalf("Error unmarshalling doxxier: %v", err)
+	// Set up mock global object
+	mockGlobal := mockjs.ValueOf(map[string]interface{}{})
+	global = mockGlobal
+
+	// Call the function being tested
+	result := GetDoxxier(mockjs.ValueOf(nil), nil)
+	assert.NotNil(t, result)
+}
+
+func TestUpdateDoxxier(t *testing.T) {
+	// Mock the existing Doxxier
+	mockDoxxier := &lib.Doxxier{
+		Description: "",
+		Recipient:   "",
 	}
 
-	if len(updatedDoxxier.Parts) == 0 {
-		t.Fatalf("Expected doxxier to have parts, but it was empty")
+	// Mock DoxxierManager with a GetDoxxier method
+	doxxierManager = lib.DoxxierManager{
+		GetDoxxier: func() *lib.Doxxier {
+			return mockDoxxier
+		},
 	}
+
+	// Mock the arguments
+	args := []mockjs.Value{
+		mockjs.ValueOf(map[string]interface{}{
+			"description": "Updated description",
+			"recipient":   "Recipient Name",
+		}),
+	}
+
+	// Call the function being tested
+	UpdateDoxxier(mockjs.ValueOf(nil), args)
+
+	// Assert the results
+	assert.Equal(t, "Updated description", mockDoxxier.Description)
+	assert.Equal(t, "Recipient Name", mockDoxxier.Recipient)
 }

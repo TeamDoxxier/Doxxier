@@ -1,4 +1,4 @@
-package network
+package cmixx_e2e
 
 import (
 	jww "github.com/spf13/jwalterweatherman"

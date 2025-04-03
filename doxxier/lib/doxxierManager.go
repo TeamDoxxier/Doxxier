@@ -17,10 +17,14 @@ type DoxxierManager struct {
 }
 
 func NewDoxxierManager(eventCallback func(string)) *DoxxierManager {
+	println("Initializing DoxxierManager")
 	orchestrator := network.TransportOrchestrator{}
-	orchestrator.NewTransportOrchestrator()
-	transport := orchestrator.GetTransportation(network.CONNECTION_PRIVACY_HIGH)
+	if err := orchestrator.Initialise(); err != nil {
+		fmt.Printf("Failed to initialize orchestrator: %v\n", err)
+		return nil
+	}
 
+	transport := orchestrator.GetTransportation(network.CONNECTION_PRIVACY_HIGH)
 	callbackChan := make(chan string)
 
 	dm := &DoxxierManager{
@@ -30,14 +34,28 @@ func NewDoxxierManager(eventCallback func(string)) *DoxxierManager {
 		eventCallback: eventCallback,
 	}
 
-	go dm.listenForCallbacks()
-	contact, err := transport.Connect(callbackChan)
-	dm.contact = contact
-
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				println(fmt.Printf("Recovered from panic in listenForCallbacks: %v\n", r))
+			}
+		}()
+		dm.listenForCallbacks()
+	}()
+	jsonData, err := dm.doxxier.ToJson()
 	if err != nil {
-		errors.WithMessage(err, "Error connecting to transport")
+		println(fmt.Printf("Error converting Doxxier to JSON: %v\n", err))
+	} else {
+		println(fmt.Sprintf("Initialized DoxxierManager: %v", jsonData))
 	}
-	fmt.Println("Generated contact: ", dm.contact)
+	err = transport.Connect(callbackChan, "")
+	if err != nil {
+		fmt.Printf("Error connecting to transport: %v\n", err)
+		close(callbackChan) // Close the channel on error
+		return nil
+	}
+	// dm.contact = contact
+	// fmt.Println("Generated contact: ", dm.contact)
 
 	return dm
 }

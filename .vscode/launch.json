@@ -17,6 +17,20 @@
             "request": "launch",
             "mode": "auto",
             "program": "./doxxier/main.go",
+            "args": [
+            ]
+        },
+        {
+            "name": "Launch Go",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/doxxier/main.go",
+            "args": ["-recipient=PHh4YygyKW1aZWd5S1Jyemg0UjZBQk5VTFJ4Mjh6YWxidEN3cEVjVFBrZnRGQzMwVXdEa0FaaUI5a1pvK0RsM1I5cGdWUDM5WWJ5ZlRtVHVERm5OdEN2Q0Vlcm51OXVNNmhPdklwV3A4QkJqeFZnL2d5dnlLVS8vS0FXbVlJLzVROGlxMDZVTDFuN2xrbCt4bmwraUYvcG9mdWdGT0pmampLeUkrVEJycTdlQjhQcEZKQVZPeEtENG9oY2pvU3ZYaHJwU1ZYZWpsbkhrRmk3NjZiNFlmUjJlSGNmOWxhQ0xkSHViRVpnbmZxdHpOLzRtZ2lzMlYxYkVIckV1NitCd2NnV2RUeFpFWElXNXd5ZUNKdVBPUUY4d01kQWZscnRYL0ZTZnNRdStrOVl0b2t4b2xSOGtDM1AxTzJoam1FM2RJNmRrQVc4OGRQUkpQcjJJQ1dGSUUrM3l5aWUxLzBhRlZmMTU1RGdSYURVa3M4MCtVSVZEUStQbERZMUdwZ0RjUTRDUlIzNVJNLzlZbWJUYWg5UEd3Zkl2RnUwNlhBMmVpYVJsVzFSQlBNRW5XRXlnOHVGY29mcWVGMUY4R2tSVDd1VnI3dWJnMk83NzVnOTVyTjN2ZFlDN2NRelp6N2JWU2VESm1obXdldjh2NU94OU91ZHp2Y1VOcWhCektvVFNTRnBVcWJPWENrQ2JEdVkvSEdSbGZOdlNEcE9FclMyN25VNjJQb3A4UFBoVFQ1aHFmVm5WOXFsRWlNcTdzRk9ZZ0FBQWdBN0JraFNJaGNoajA0MTZUcEpjbVA3Ymc9PXh4Yz4="],
+            "env": {},
+            "showLog": true,
+            "buildFlags": "-gcflags='all=-N -l'",
+            "console": "integratedTerminal"
         }
     ]
 }

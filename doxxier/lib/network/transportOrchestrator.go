@@ -1,6 +1,8 @@
 package network
 
-import network "doxxier.tech/doxxier/lib/network/cmixx_e2e"
+import (
+	"doxxier.tech/doxxier/lib/network/wasm/cmix_e2e"
+)
 
 type PrivacyLevel int
 
@@ -22,11 +24,17 @@ func (orchestrator *TransportOrchestrator) GetTransportation(privacyLevel Privac
 	return orchestrator.TransportMap[privacyLevel]
 }
 
-func (orchestrator *TransportOrchestrator) NewTransportOrchestrator() {
-	config := network.CMixxConfig{
-		StoragePath: "assets/storage",
+func (orchestrator *TransportOrchestrator) Initialise() error {
+	config := cmix_e2e.CMixE2eConfig{
+		StoragePath: "xxstore",
 	}
-	transport, _ := network.NewCMixxE2eTransport(config)
+	println("Initializing CMixE2eTransport")
+	transport, err := cmix_e2e.NewCmixE2eTransport(config)
+	if err != nil {
+		return err
+	}
 	orchestrator.TransportMap = make(map[PrivacyLevel]Transport)
 	orchestrator.RegisterTransport(CONNECTION_PRIVACY_HIGH, transport)
+	println("Registered CMixE2eTransport")
+	return nil
 }

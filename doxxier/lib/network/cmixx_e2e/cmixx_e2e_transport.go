@@ -1,23 +1,28 @@
-package network
+package cmixx_e2e
 
 import (
 	"crypto/ed25519"
+	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
+	"doxxier.tech/doxxier/assets"
 	"doxxier.tech/doxxier/internal"
 	"doxxier.tech/doxxier/pkg/models"
 	"github.com/pkg/errors"
 	"gitlab.com/elixxir/client/v4/catalog"
+	"gitlab.com/elixxir/client/v4/e2e/receive"
 	"gitlab.com/elixxir/client/v4/xxdk"
 	"gitlab.com/elixxir/crypto/codename"
 	"gitlab.com/elixxir/crypto/contact"
 	"gitlab.com/elixxir/crypto/nike"
+	"gitlab.com/elixxir/ekv/portableOS"
+	"gitlab.com/elixxir/primitives/fact"
 	"gitlab.com/xx_network/primitives/id"
 )
 
-type CMixxConfig struct {
+type CMixxE2eConfig struct {
 	NdfPath            string
 	CertPath           string
 	Secret             string
@@ -28,7 +33,6 @@ type CMixxConfig struct {
 
 const (
 	secretFlag             = "cE+a6mP>p`4b]F8;CY&*t}"
-	ndfPathFlag            = "assets/ndf.json"
 	certPathFlag           = "assets/main.cert"
 	identityStorageKeyFlag = "identityStore"
 )
@@ -50,14 +54,12 @@ type CmixxE2eTransport struct {
 	partnerToken       uint32
 	identity           *xxdk.ReceptionIdentity
 	callbackChan       chan string
+	recipientConnected bool
 }
 
-func NewCMixxE2eTransport(config CMixxConfig) (*CmixxE2eTransport, error) {
+func NewCMixxE2eTransport(config CMixxE2eConfig) (*CmixxE2eTransport, error) {
 	if config.Secret == "" {
 		config.Secret = secretFlag
-	}
-	if config.NdfPath == "" {
-		config.NdfPath = ndfPathFlag
 	}
 	if config.CertPath == "" {
 		config.CertPath = certPathFlag
@@ -75,14 +77,64 @@ func NewCMixxE2eTransport(config CMixxConfig) (*CmixxE2eTransport, error) {
 		StoragePath:        config.StoragePath,
 		identityStorageKey: config.identityStorageKey,
 	}
+	println("Initialized CMixxE2eTransport")
 	return transport, nil
 }
 
+// Transport interface methods
 func (c *CmixxE2eTransport) Disconnect() error {
 	c.cMixxNet.StopNetworkFollower()
 	SendEventToChannel(&c.callbackChan, []string{"Disconnected from cMixx network"})
 	return nil
 }
+
+func (c *CmixxE2eTransport) Connect(callbackChan chan string) error {
+	c.callbackChan = callbackChan
+	err := c.initialiseCMixx()
+	identity, err := c.initialiseReceptionIdentity()
+	if err != nil {
+		return errors.WithMessage(err, "Error initialising reception identity")
+	}
+	c.identity = identity
+	//contactOutput := internal.BytesToBase64(identity.GetContact().Marshal())
+	err = c.connectCmixx()
+	if err != nil {
+		return errors.WithMessage(err, "Error connecting to cMixx")
+	}
+
+	return nil
+}
+
+func (c *CmixxE2eTransport) Send(contact string, doxxier models.Doxxier) error {
+	return nil
+}
+
+func (c *CmixxE2eTransport) SendMessage(recipient string, message string) error {
+	if !c.recipientConnected {
+		err := c.connectRecipient(recipient)
+		if err != nil {
+			return errors.WithMessage(err, "Error connecting to recipient")
+		}
+	}
+	client := c.user.GetE2E()
+	params := xxdk.GetDefaultE2EParams()
+	recipientDecoded, err := internal.Base64ToBytes(recipient)
+	if err != nil {
+		return errors.WithMessage(err, "Error decoding recipient")
+	}
+	e2eContact, err := contact.Unmarshal(recipientDecoded)
+	if err != nil {
+		return errors.WithMessage(err, "Error unmarshalling contact")
+	}
+	report, err := client.SendE2E(catalog.XxMessage, e2eContact.ID, []byte(message), params.Base)
+	if err != nil {
+		return errors.WithMessage(err, "Error sending message")
+	}
+	SendEventToChannel(&c.callbackChan, []string{"Message sent: " + string(report.MessageId.StringVerbose())})
+	return nil
+}
+
+//Helper functions
 
 func SendEventToChannel(channel *chan string, events []string) {
 	for _, event := range events {
@@ -90,27 +142,38 @@ func SendEventToChannel(channel *chan string, events []string) {
 	}
 }
 
-func (c *CmixxE2eTransport) Connect(callbackChan chan string) (string, error) {
-	c.callbackChan = callbackChan
-	err := c.initialiseCMixx()
+func (c *CmixxE2eTransport) connectRecipient(recipient string) error {
+	recipientDecoded, err := internal.Base64ToBytes(recipient)
 	if err != nil {
-		return "", errors.WithMessage(err, "Error initialising CMixx")
+		return errors.WithMessage(err, "Error decoding recipient")
 	}
+	recipientContact, err := contact.Unmarshal(recipientDecoded)
+	if err != nil {
+		return errors.WithMessage(err, "Error unmarshalling contact")
+	}
+	e2eClient := c.user.GetE2E()
+	time.Sleep(30 * time.Second)
 
-	identity, err := c.initialiseReceptionIdentity()
+	_, err = e2eClient.GetPartner(recipientContact.ID)
+	confirmChan := make(chan contact.Contact, 5)
 	if err != nil {
-		return "", errors.WithMessage(err, "Error initialising reception identity")
-	}
-	c.identity = identity
-	contactOutput := internal.BytesToBase64(identity.GetContact().Marshal())
-	err = c.connectCmixx()
-	if err != nil {
-		return "", errors.WithMessage(err, "Error connecting to cMixx")
-	}
-	return contactOutput, nil
-}
+		_, err = c.user.GetAuth().Request(recipientContact, fact.FactList{})
+		if err != nil {
+			return errors.WithMessage(err, "Error requesting contact")
+		}
+		timeout := time.NewTimer(30 * time.Second)
 
-func (c *CmixxE2eTransport) Send(contact string, doxxier models.Doxxier) error {
+		select {
+		case pc := <-confirmChan:
+			if !pc.ID.Cmp(recipientContact.ID) {
+				SendEventToChannel(&c.callbackChan, []string{"Contact confirmation failed"})
+			}
+			break
+		case <-timeout.C:
+			SendEventToChannel(&c.callbackChan, []string{"Contact confirmation timed out"})
+			break
+		}
+	}
 	return nil
 }
 
@@ -136,8 +199,10 @@ func (c *CmixxE2eTransport) connectCmixx() error {
 			select {
 			case isConnected = <-connected:
 				SendEventToChannel(&c.callbackChan, []string{"Connected to cMixx network"})
+				break
 			case <-timeoutTimer.C:
 				SendEventToChannel(&c.callbackChan, []string{"Connecting to cMixx timed out"})
+				break
 			}
 		}
 	}
@@ -148,7 +213,7 @@ func (c *CmixxE2eTransport) connectCmixx() error {
 		},
 	)
 	waitUntilConnected(connected)
-	e2eClient.RegisterListener(&id.ZeroUser, catalog.NoType, listener{name: "listener"})
+	e2eClient.RegisterListener(&id.ZeroUser, catalog.NoType, c)
 	return nil
 }
 
@@ -168,20 +233,28 @@ func (c *CmixxE2eTransport) initialiseReceptionIdentity() (*xxdk.ReceptionIdenti
 }
 
 func (c *CmixxE2eTransport) initialiseCMixx() error {
-	//Establish session
+	println("Starting initialiseCMixx")
+	println(fmt.Printf("NDF Path: %s\n", c.ndfPath))
+	println(fmt.Printf("Storage Path: %s\n", c.StoragePath))
+
 	ndf, err := c.getNdf()
 	if err != nil {
+		println(fmt.Printf("Error getting NDF: %v\n", err))
 		return errors.WithMessage(err, "Error getting NDF")
 	}
-	//Connect to CMixx
+	println("NDF successfully retrieved")
+
 	secretBytes := []byte(c.secret)
-	stat, err := os.Stat(c.StoragePath + "/xx")
+	stat, err := portableOS.Stat(c.StoragePath + "/xx")
 	if os.IsNotExist(err) || !stat.IsDir() {
+		println("Creating new CMixx")
 		err = xxdk.NewCmix(string(ndf), c.StoragePath+"/xx", secretBytes, "")
 		if err != nil {
+			println(fmt.Printf("Error connecting to CMixx: %v\n", err))
 			return errors.WithMessage(err, "Error connecting to CMixx")
 		}
 	}
+	println("CMixx initialized successfully")
 
 	params := xxdk.GetDefaultCMixParams()
 	net, err := xxdk.LoadCmix(c.StoragePath+"/xx", secretBytes, params)
@@ -194,10 +267,25 @@ func (c *CmixxE2eTransport) initialiseCMixx() error {
 
 func (c *CmixxE2eTransport) getNdf() (string, error) {
 	//Read NDF file
+	if c.ndfPath == "" {
+		ndf, err := assets.ParseNdf()
+		if err != nil {
+			return "", errors.WithMessage(err, "Error parsing NDF")
+		}
+		return ndf, nil
+	}
 	ndfPath := filepath.Join(internal.GetRootPath(), c.ndfPath)
 	jsonNdf, err := os.ReadFile(ndfPath)
 	if err != nil {
 		return "", errors.WithMessage(err, "Error reading NDF file")
 	}
 	return string(jsonNdf), nil
+}
+
+func (c *CmixxE2eTransport) Hear(item receive.Message) {
+	SendEventToChannel(&c.callbackChan, []string{"Received message: " + string(item.Payload)})
+}
+
+func (l *CmixxE2eTransport) Name() string {
+	return "Transport listener"
 }

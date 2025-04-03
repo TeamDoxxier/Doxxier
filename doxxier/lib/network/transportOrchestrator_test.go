@@ -3,7 +3,7 @@ package network
 import (
 	"testing"
 
-	network "doxxier.tech/doxxier/lib/network/cmixx_e2e"
+	"doxxier.tech/doxxier/lib/network/wasm/cmix_e2e"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -12,7 +12,7 @@ func TestNewTransportOrchestrator(t *testing.T) {
 		TransportMap: make(map[PrivacyLevel]Transport),
 	}
 
-	orchestrator.NewTransportOrchestrator()
+	orchestrator.Initialise()
 
 	transport := orchestrator.GetTransportation(CONNECTION_PRIVACY_HIGH)
 	if transport == nil {
@@ -20,10 +20,13 @@ func TestNewTransportOrchestrator(t *testing.T) {
 	}
 
 	// Additional checks can be added here to verify the transport configuration
-	config := network.CMixxConfig{
+	config := cmix_e2e.CMixE2eConfig{
 		StoragePath: "assets/storage",
 	}
-	expectedTransport, _ := network.NewCMixxE2eTransport(config)
+	expectedTransport, err := cmix_e2e.NewCmixE2eTransport(config)
+	if err != nil {
+		t.Errorf("Error creating expected transport: %v", err)
+	}
 	assert.Equal(t, expectedTransport, transport)
 
 }

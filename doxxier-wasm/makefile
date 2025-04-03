@@ -16,7 +16,7 @@ build:
 
 binary:
 	mkdir -p assets/wasm
-	GOOS=js GOARCH=wasm go build -ldflags '-w -s' -trimpath -o doxxier.wasm main.go
+	GOOS=js GOARCH=wasm go build -tags debug -ldflags '-w -s' -trimpath -o doxxier.wasm . 
 	cp doxxier.wasm assets/wasm/
 	cp doxxier.wasm ../test-harness/static/assets/
 	rm -rf doxxier.wasm

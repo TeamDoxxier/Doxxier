@@ -21,7 +21,7 @@
 go.work
 go.work.sum
 *DS_Store
-
+*test_assets/*
 doxxier/test_storage/*
 doxxier/vendor/
 test-harness/vendor/
@@ -29,3 +29,5 @@ poc-frontend/node_modules/*
 doxxier-wasm/vendor/*
 doxxier/lib/network/cmixx_e2e/func (c \*CMixxE2eTransport) initialiseCM.txt
 doxxier/assets/storage
+doxxier-wasm/assets/wasm
+doxxier-wasm/assets/storage
